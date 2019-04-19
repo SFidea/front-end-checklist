@@ -14,6 +14,11 @@
 * [学习不一样的Vue](https://github.com/liangxiaojuan/vue-todos)
 * [十分钟入门Vuex](https://www.jianshu.com/p/a804606ad8e9)
 * [Vuex白话教程](https://www.jianshu.com/u/cc68942bb696)
+* [Vuex源码学习](https://juejin.im/post/5c95e6d9f265da60ef634ffc)
 * [手摸手，带你用vue撸后台 系列一（基础篇）](https://juejin.im/post/59097cd7a22b9d0065fb61d2)
 * [从零实现Vue的组件库](https://juejin.im/post/5c0b8ece5188254f9e2809fe)
+* [Vue 源码分析系列](https://juejin.im/post/5cafe6a85188251d28699400)
+
+# CI/CD
+* [Gitlab自动部署](https://juejin.im/post/5cb92f67e51d456e896349f7)
 
