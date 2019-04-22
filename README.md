@@ -5,6 +5,7 @@
 
 # Webpack教程
 * [Webpack官方指南](https://www.webpackjs.com/guides/installation/)
+* [深入浅出Webpack](https://github.com/gwuhaolin/dive-into-webpack)
 * [24 个实例入门并掌握Webpack4](https://juejin.im/user/57c4ac7fc4c97100619a0fce/posts)
 * [从基础到实战 手摸手带你掌握新版Webpack4.0详解 一起读文档](https://juejin.im/post/5cb36a3ef265da03a1581d6d)
 
