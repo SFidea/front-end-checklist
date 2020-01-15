@@ -12,7 +12,7 @@
 # Vue 教程
 ## Vue入门
 * [Vue从零开始系列](https://juejin.im/user/5acf253f6fb9a028c71ed61d/posts)
-* [学习不一样的Vue](https://github.com/liangxiaojuan/vue-todos)
+* [学习不一样的Vue](https://www.cnblogs.com/bwdblogs/p/11147634.html)
 * [十分钟入门Vuex](https://www.jianshu.com/p/a804606ad8e9)
 * [Vuex白话教程](https://www.jianshu.com/u/cc68942bb696)
 * [Vuex源码学习](https://juejin.im/post/5c95e6d9f265da60ef634ffc)
