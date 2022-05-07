@@ -1,0 +1,362 @@
+https://www.zhi12.cn/?q=node/14687&expire=1651885203&code=wzZkxlrD6eA&sign=664479689aedbccd393c26fd7b6862c4#paywall
+
+文章爬取脚本
+var request = require("request");
+var cheerio = require("cheerio");
+var fs = require("fs");
+
+var cookieStr = 'XXXXX';//这里需要填写自己登陆 chatbook以后的cookie信息
+var userAgentStr = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36";
+var headers = {
+    "Cookie": cookieStr,
+    "User-Agent": userAgentStr,
+}
+
+
+let synchronous_post = function (url) {
+    
+    var options = {
+        timeout:5000,
+        url: url,
+        headers: headers,
+    }
+    
+        return new Promise(function (resolve, reject) {
+            request(options, function (error, response, body) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
+    }
+
+// 保存该课程
+function saveCourse(courseTitle, pageCont){
+    checkFileExsit(courseTitle).then(({path,courseTitle,dir})=>{
+        fs.mkdir(dir, {recursive: true}, (err) => {
+            if (err) return;
+            fs.writeFile(path, pageCont, function (error) {
+                if (error) {
+                    console.log("保存失败", "\n", path);
+                    console.log("error", error);
+                } else {
+                    console.log("保存成功:", courseTitle,"\n");
+                }
+            }); 
+        });
+    }).catch(e=>{
+        console.log("e2")
+    })
+}
+
+function checkFileExsit(courseTitle){
+    var dir = "./gitbook3/";
+    var fileName = courseTitle + ".html";
+    fileName = fileName.replace(/\s+/g, "");
+    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+    var path = dir + fileName;
+    return new Promise(function(resolve,reject){
+        fs.access(path, fs.constants.F_OK, (err) => {
+            console.log(`${path} ${err ? '不存在' : '存在'}\n`);
+            if(err){
+                resolve({path,courseTitle,dir});    
+            }else{
+                reject();
+            }
+        })
+    });
+}
+
+// 保存图片
+function saveImage(src, fileName){
+    var options = {
+        timeout:5000,
+        url: src,
+        headers: headers,
+    }
+    fileName = fileName.replace(/\s+/g, "");
+    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+    fs.mkdir("./gitchatimage/", {recursive: true}, (err) => {
+        if (err) return;
+        request(options).pipe(
+            fs.createWriteStream(`./gitchatimage/${fileName}`).on('close',err=>{})
+        )
+    });
+    
+}
+
+async function getCourse(href){
+    try{
+        let body = await synchronous_post('https://gitbook.cn' + href);
+        var $ = cheerio.load(body);
+        var courseTitle = $('h1.user_select_text').text();
+        console.log(courseTitle);
+        checkFileExsit(courseTitle).then(({path,courseTitle,dir})=>{
+            console.log("不重复");
+            var images = $("p > img");
+            if(images&&images.length>0){
+                images.each(function(){
+                    var src = $(this).attr('src');
+                    if(src && (src.indexOf("https://images.gitbook.cn/")>-1||src.indexOf("http://images.gitbook.cn/")>-1)){
+                        var fileName = src.substring(src.lastIndexOf("/"))+".png";
+                        saveImage(src,fileName);
+                        fileName = fileName.replace(/\s+/g, "");
+                        fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+                        $(this).attr("src","../gitchatimage/"+fileName);
+                    }
+                });   
+            }
+            var column_topic_view = $(".main_view").html();
+            var pageCont =''+
+                '<!DOCTYPE html>'+
+                '<html lang="en">'+
+                '<head>'+
+                    '<meta charset="UTF-8">'+
+                    '<meta name="viewport" content="width=device-width, initial-scale=1.0">'+
+                    '<meta http-equiv="X-UA-Compatible" content="ie=edge">'+
+                    '<title>Document</title>'+
+                    '<link rel="stylesheet" href="https://www.zhi12.cn/../gitchatcss/common.css"><link rel="stylesheet" href="https://www.zhi12.cn/../gitchatcss/bundle2.css"><link rel="stylesheet" href="https://www.zhi12.cn/../gitchatcss/maziArticleV2.css">'+
+                    '<script src="https://www.zhi12.cn/../gitchatcss/js2.js"></script>'+
+                '</head>'+
+                '<body>'+
+                    '<div class="main_view">'+
+                        column_topic_view+
+                    '</div>'+
+                '</body>'+
+                '</html>'+            
+            '';
+            saveCourse(courseTitle,pageCont);
+        }).catch(e=>{
+            console.log("e1")
+        })
+    }catch(e){
+        
+    }
+}
+
+// 获取所有课程的 url
+let getAllCourseUrl = async function (){
+    var requestUrl = "https://gitbook.cn/gitchat/ordered";
+    try{
+        let body = await synchronous_post(requestUrl);
+        var $ = cheerio.load(body);
+        var clist = $('.gain_chat_color_btn');
+        if(clist){
+            let urlList = [];
+            clist.each(function(){
+                var href = $(this).attr('href');
+                urlList.push(href);
+            });
+            for (let i=0;i<urlList.length;i++) {
+                await getCourse(urlList[i]);
+            }
+        }    
+    }catch(e){
+        
+    }
+}
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
+};
+
+getAllCourseUrl();
+
+专栏爬取脚本
+
+var request = require("request");
+var cheerio = require("cheerio");
+var fs = require("fs");
+
+var cookieStr = "xxxxx";
+var userAgentStr = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36";
+var headers = {
+    "Cookie": cookieStr,
+    "User-Agent": userAgentStr,
+}
+
+var savePath = "./gitchatZl/";
+var imageSavepath = "./gitchatZlimage/";
+
+let synchronous_post = function (url) {
+    
+    var options = {
+        timeout:5000,
+        url: url,
+        headers: headers,
+    }
+    
+        return new Promise(function (resolve, reject) {
+            request(options, function (error, response, body) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
+    }
+
+
+// 保存该课程的一个主题
+function saveCourseOne(courseTitle, courseNum, topicTitle, pageCont){
+    var dir = savePath+topicTitle;
+    var fileName = `【第${courseNum}课】${courseTitle}.html`;
+    fileName = fileName.replace(/\s+/g, "");
+    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+
+    var path = dir +"/"+ fileName;
+        fs.mkdir(dir, {recursive: true}, (err) => {
+            if (err) return;
+            fs.writeFile(path, pageCont, function (error) {
+                if (error) {
+                    console.log("保存失败",topicTitle,"---",courseTitle, "\n");
+                    console.log("error", error);
+                } else {
+                    console.log("保存成功:", path,"\n");
+                }
+            }); 
+        });
+
+
+}
+
+function checkFileExsit(courseTitle, courseNum, topicTitle){
+    var dir = savePath+topicTitle;
+    var fileName = `【第${courseNum}课】${courseTitle}.html`;
+    fileName = fileName.replace(/\s+/g, "");
+    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+
+    var path = dir +"/"+ fileName;
+    return new Promise(function(resolve,reject){
+        fs.access(path, fs.constants.F_OK, (err) => {
+            if(err){
+                resolve({path,courseTitle,dir});    
+            }else{
+                reject(new Error("文件已经存在"));
+            }
+        })
+    });
+}
+
+// 保存课程图片
+function saveImage(src, fileName){
+    var options = {
+        timeout:5000,
+        url: src,
+        headers: headers,
+    }
+    fileName = fileName.replace(/\s+/g, "");
+    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+    fs.mkdir(imageSavepath, {recursive: true}, (err) => {
+        if (err) return;
+        request(options).pipe(
+            fs.createWriteStream(`${imageSavepath}${fileName}`).on('close',err=>{})
+        )
+    });
+    
+}
+
+// 获取课程一个主题的内容
+async function getCourseOne(courseUrl, courseNum, topicTitle, courseid){
+    var url = courseUrl + "/topic/" + courseid;
+    try{
+        var body = await synchronous_post(url);
+        var $ = cheerio.load(body);
+        var courseTitle = $("h2.topic_title").text();
+        await checkFileExsit(courseTitle, courseNum, topicTitle)
+        var images = $("p > img");
+        if(images&&images.length>0){
+            images.each(function(){
+                var src = $(this).attr('src');
+                if(src && (src.indexOf("https://images.gitbook.cn/")>-1||src.indexOf("http://images.gitbook.cn/")>-1)){
+                    var fileName = src.substring(src.lastIndexOf("/"))+".png";
+                    fileName = fileName.replace(/\s+/g, "");
+                    fileName = fileName.replace(/[<>:"/|?*]+/g, "");
+                    $(this).attr("src",`../.${imageSavepath}${fileName}`);
+                    saveImage(src,fileName);
+                }
+            });
+        }
+        
+        var column_topic_view = $(".column_content").html();
+        var pageCont =''+
+            '<!DOCTYPE html>'+
+            '<html lang="en">'+
+            '<head>'+
+                '<meta charset="UTF-8">'+
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">'+
+                '<meta http-equiv="X-UA-Compatible" content="ie=edge">'+
+                '<title>Document</title>'+
+                '<link href="https://www.zhi12.cn/../../gitchatcss/bundle1.css" rel="stylesheet"><link href="https://www.zhi12.cn/../../gitchatcss/rpi.css" rel="stylesheet"><link href="https://www.zhi12.cn/../../gitchatcss/bundle1.css" rel="stylesheet"><link href="https://www.zhi12.cn/../../gitchatcss/katex.min.css" rel="stylesheet"><link href="https://www.zhi12.cn/../../gitchatcss/gitchatColumnTopicDetail.css" rel="stylesheet"><link href="https://www.zhi12.cn/../../gitchatcss/followDialog.css" rel="stylesheet">'+
+            '</head>'+
+            '<body>'+
+                '<div class="column_topic_view">'+
+                    column_topic_view+
+                '</div>'+
+            '</body>'+
+            '</html>';
+        saveCourseOne(courseTitle, courseNum, topicTitle, pageCont)
+    }catch(e){
+        console.log(`获取课程文章${courseUrl}失败`,e);
+    }
+    
+}
+
+// 根据课程url，获取课程所有主题的内容
+async function getTopicAllCourse(courseUrl){
+    courseUrl = 'https://gitbook.cn'+courseUrl;
+    try{
+        var body = await synchronous_post(courseUrl);
+        var $ = cheerio.load(body);
+        //主题名称
+        var topicTitle = $(".column_infos").find('h1').text();
+        var topic = $(".column_categorys").find('.category');
+        // 主题id
+        var cids = [];
+        topic.each(function(index){
+            if ($(this).attr("onclick")){
+                var courseid = $(this).attr("onclick").substring(14, 38);
+                cids.push(courseid);
+            }
+        });
+        for (let index = 0; index < cids.length; index++) {
+            const courseid = cids[index];
+            await getCourseOne(courseUrl, index+1, topicTitle, courseid);
+        }
+    }catch(e){
+        console.log(`课程地址${courseUrl}请求失败`,e);
+    }
+};
+
+async function getAllTopUrl(){
+    var requestUrl = "https://gitbook.cn/gitchat/ordered/columns";
+    var body = await synchronous_post(requestUrl);
+    var $ = cheerio.load(body);
+    var clist = $('.column');
+    if(clist){
+        var courseHrefs = [];
+        clist.each(function(){
+            var href = $(this).attr('href');
+            courseHrefs.push(href);
+        });
+        for(let i = 0;i<courseHrefs.length;i++){
+            await getTopicAllCourse(courseHrefs[i]);
+        }
+    }  
+}
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
+};
+
+getAllTopUrl();
+//单个专栏  爬取不全的可以单独处理
+//getTopicAllCourse('/gitchat/column/5d68b823de93ed72d6eca1bc');
+
+
+注意专栏爬取有可能爬取失败导致爬取不全，可以使用getTopicAllCourse 单独爬取这个专栏，或者多跑几次
+
+有问题可以给我发邮件  loveking1983@hotmail.com
